@@ -18,6 +18,7 @@ package config
 import (
 	"flag"
 	"fmt"
+	"os"
 
 	"github.com/algonode/algostreamer/constant"
 	"github.com/algonode/algostreamer/internal/algod"
@@ -51,13 +52,13 @@ func LoadConfig() (cfg SteramerConfig, err error) {
 	var OPA rego.OpaConfig
 	flag.Parse()
 	cfg = defaultConfig
-	// algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: os.Getenv("NodeHost"), Id: os.Getenv("NodeType"), Token: ""})
-	algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: constant.NodeHost, Id: constant.NodeType, Token: ""})
+	algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: os.Getenv("NodeHost"), Id: os.Getenv("NodeType"), Token: ""})
+	// algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: constant.NodeHost, Id: constant.NodeType, Token: ""})
 	// algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: "http://172.31.43.67:8080", Id: "private-node", Token: ""})
 	algodVar.ANodes = algoNode
 	cfg.Algod = &algodVar
-	// algoRedis.Addr = os.Getenv("RedisHost") + ":" + os.Getenv("RedisPort")
-	algoRedis.Addr = constant.RedisHost + ":" + constant.RedisPort
+	algoRedis.Addr = os.Getenv("RedisHost") + ":" + os.Getenv("RedisPort")
+	// algoRedis.Addr = constant.RedisHost + ":" + constant.RedisPort
 	algoRedis.DB = 0
 	algoRedis.Password = ""
 	algoRedis.Username = ""

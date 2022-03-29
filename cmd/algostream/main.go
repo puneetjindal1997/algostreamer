@@ -33,8 +33,8 @@ import (
 func main() {
 	var db redis.Database
 	var redisErr error
-	// databaseImplementation := os.Getenv("RedisDB")
-	databaseImplementation := "test"
+	databaseImplementation := os.Getenv("RedisDB")
+	// databaseImplementation := "test"
 	log.Println(databaseImplementation)
 	db, redisErr = redis.Factory(databaseImplementation)
 	log.Println(db, redisErr)

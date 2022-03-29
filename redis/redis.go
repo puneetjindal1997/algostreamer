@@ -1,7 +1,8 @@
 package redis
 
 import (
-	"github.com/algonode/algostreamer/constant"
+	"os"
+
 	goredislib "github.com/go-redis/redis/v8"
 	"github.com/go-redsync/redsync/v4"
 	"github.com/go-redsync/redsync/v4/redis/goredis/v8"
@@ -19,8 +20,8 @@ var RedSync *redsync.Redsync
  */
 func createRedisDatabase() (Database, error) {
 	client := goredislib.NewClient(&goredislib.Options{
-		Addr: constant.RedisHost + ":" + constant.RedisPort,
-		// Addr:     os.Getenv("RedisHost") + ":" + os.Getenv("RedisPort"),
+		// Addr: constant.RedisHost + ":" + constant.RedisPort,
+		Addr:     os.Getenv("RedisHost") + ":" + os.Getenv("RedisPort"),
 		Password: "",
 		DB:       0,
 	})
