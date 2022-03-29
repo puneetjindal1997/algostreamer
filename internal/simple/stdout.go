@@ -360,6 +360,7 @@ func handleBlockStdOut(b *algod.BlockWrap, redis redis.Database) error {
 					orderId := binary.BigEndian.Uint64(orderIdByte)
 					// self address
 					encodeSelfAddress := txn.ApplyData.EvalDelta.Logs[2]
+					log.Println("encodeSelfAddress===========>", encodeSelfAddress)
 					sEnc := base64.StdEncoding.EncodeToString([]byte(encodeSelfAddress))
 					selfAddress := sEnc
 					// base_coin_avaliable

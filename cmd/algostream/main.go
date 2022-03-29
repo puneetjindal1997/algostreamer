@@ -21,8 +21,10 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 
+	"github.com/algonode/algostreamer/database"
 	"github.com/algonode/algostreamer/internal/algod"
 	"github.com/algonode/algostreamer/internal/config"
 	"github.com/algonode/algostreamer/internal/rdb"
@@ -31,6 +33,13 @@ import (
 )
 
 func main() {
+	// connecting to rds db
+	database.DbInit()
+	appIds, err := database.Mgr.GetAllAppIds()
+	if err != nil {
+		log.Println("errrrrrrrrrrrrrrrrrrrrrrrr", err)
+	}
+	// connecting to redis
 	var db redis.Database
 	var redisErr error
 	databaseImplementation := os.Getenv("RedisDB")
@@ -41,6 +50,10 @@ func main() {
 	if redisErr != nil {
 		log.Println("panic from redis")
 		panic(redisErr)
+	}
+	for _, n := range appIds {
+		appIdStr := strconv.Itoa(n)
+		db.Set(appIdStr, true)
 	}
 	//load config
 	cfg, err := config.LoadConfig()
