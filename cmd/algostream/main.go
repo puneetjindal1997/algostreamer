@@ -18,6 +18,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"log"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,10 +27,21 @@ import (
 	"github.com/algonode/algostreamer/internal/config"
 	"github.com/algonode/algostreamer/internal/rdb"
 	"github.com/algonode/algostreamer/internal/simple"
+	"github.com/algonode/algostreamer/redis"
 )
 
 func main() {
-
+	var db redis.Database
+	var redisErr error
+	// databaseImplementation := os.Getenv("RedisDB")
+	databaseImplementation := "test"
+	log.Println(databaseImplementation)
+	db, redisErr = redis.Factory(databaseImplementation)
+	log.Println(db, redisErr)
+	if redisErr != nil {
+		log.Println("panic from redis")
+		panic(redisErr)
+	}
 	//load config
 	cfg, err := config.LoadConfig()
 	if err != nil {
@@ -61,14 +73,14 @@ func main() {
 	}
 
 	//spawn a block stream fetcher that never fails
-	blocks, status, err := algod.AlgoStreamer(ctx, cfg.Algod)
+	blocks, status, err := algod.AlgoStreamer(ctx, cfg.Algod, db)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "[!ERR][_MAIN] error getting algod stream: %s\n", err)
 		return
 	}
 
 	if cfg.Stdout {
-		err = simple.SimplePusher(ctx, blocks, status)
+		err = simple.SimplePusher(ctx, blocks, status, db)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "[!ERR][_MAIN] error setting up simple mode: %s\n", err)
 			return

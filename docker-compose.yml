@@ -1,0 +1,31 @@
+version: "2.0"
+services:
+  redis:
+    container_name: redis_c
+    ports:
+      - '6379:6379'
+#    volumes:
+#      - docker-redis:/data
+    image: redis
+    environment:
+      - REDIS_REPLICATION_MODE=master
+  rabbitmq:
+    container_name: rabbitmq_c
+    image: rabbitmq:3-management
+    command: rabbitmq-server
+#    volumes:
+#      - docker-etc:/etc/rabbitmq/
+#      - docker-data:/var/lib/rabbitmq/
+#      - docker-logs:/var/log/rabbitmq/
+    ports:
+      - '0.0.0.0:15672:15672'
+      - '0.0.0.0:5672:5672'
+  algostreamer:
+    container_name: algostreamer1_c
+    restart: always
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+      

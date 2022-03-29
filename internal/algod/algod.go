@@ -20,10 +20,12 @@ import (
 	"fmt"
 	"math"
 	"os"
+	"strconv"
 	"sync/atomic"
 	"time"
 
 	"github.com/algonode/algostreamer/internal/utils"
+	"github.com/algonode/algostreamer/redis"
 	"github.com/algorand/go-algorand-sdk/client/v2/algod"
 	"github.com/algorand/go-algorand-sdk/client/v2/common/models"
 	"github.com/algorand/go-algorand-sdk/encoding/msgpack"
@@ -63,7 +65,7 @@ type BlockWrap struct {
 //reads are safe as the var is 64bit aligned
 var globalMaxBlock uint64 = 0
 
-func AlgoStreamer(ctx context.Context, acfg *AlgoConfig) (chan *BlockWrap, chan *Status, error) {
+func AlgoStreamer(ctx context.Context, acfg *AlgoConfig, redisStore redis.Database) (chan *BlockWrap, chan *Status, error) {
 	qDepth := acfg.Queue
 	if qDepth < 1 {
 		qDepth = 100
@@ -73,7 +75,7 @@ func AlgoStreamer(ctx context.Context, acfg *AlgoConfig) (chan *BlockWrap, chan 
 	schan := make(chan *Status, qDepth)
 
 	for idx := range acfg.ANodes {
-		if err := algodStreamNode(ctx, acfg, idx, bchan, schan, acfg.FRound, acfg.LRound); err != nil {
+		if err := algodStreamNode(ctx, acfg, idx, bchan, schan, acfg.FRound, acfg.LRound, redisStore); err != nil {
 			return nil, nil, err
 		}
 	}
@@ -105,7 +107,7 @@ func AlgoStreamer(ctx context.Context, acfg *AlgoConfig) (chan *BlockWrap, chan 
 	return bestbchan, schan, nil
 }
 
-func algodStreamNode(ctx context.Context, acfg *AlgoConfig, idx int, bchan chan *BlockWrap, schan chan *Status, start int64, stop int64) error {
+func algodStreamNode(ctx context.Context, acfg *AlgoConfig, idx int, bchan chan *BlockWrap, schan chan *Status, start int64, stop int64, redis redis.Database) error {
 
 	cfg := acfg.ANodes[idx]
 	// Create an algod client
@@ -136,6 +138,9 @@ func algodStreamNode(ctx context.Context, acfg *AlgoConfig, idx int, bchan chan 
 
 		var nextRound uint64 = 0
 		if start < 0 {
+			blockValue, _ := redis.Get("block_no")
+			blockStr := blockValue.(string)
+			nodeStatus.LastRound, _ = strconv.ParseUint(blockStr, 10, 64)
 			nextRound = nodeStatus.LastRound
 			fmt.Fprintf(os.Stderr, "[WARN][ALGOD][%s] Starting from last round : %d\n", cfg.Id, nodeStatus.LastRound)
 		} else {
@@ -146,6 +151,7 @@ func algodStreamNode(ctx context.Context, acfg *AlgoConfig, idx int, bchan chan 
 		ustop := uint64(stop)
 		for stop < 0 || nextRound <= ustop {
 			for ; nextRound <= nodeStatus.LastRound; nextRound++ {
+				redis.Set("block_no", nextRound)
 				err := utils.Backoff(ctx, func(actx context.Context) error {
 					gMax := globalMaxBlock
 					//skip old blocks in case other nodes are ahead of us

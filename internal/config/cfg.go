@@ -19,16 +19,16 @@ import (
 	"flag"
 	"fmt"
 
+	"github.com/algonode/algostreamer/constant"
 	"github.com/algonode/algostreamer/internal/algod"
 	"github.com/algonode/algostreamer/internal/rdb"
 	"github.com/algonode/algostreamer/internal/rego"
-	"github.com/algonode/algostreamer/internal/utils"
 )
 
 var cfgFile = flag.String("f", "config.jsonc", "config file")
 var firstRound = flag.Int64("r", -1, "first round to start [-1 = latest]")
 var lastRound = flag.Int64("l", -1, "last round to read [-1 = no limit]")
-var simpleFlag = flag.Bool("s", false, "simple mode - just sending blocks in JSON format to stdout")
+var simpleFlag = flag.Bool("s", true, "simple mode - just sending blocks in JSON format to stdout")
 
 type SinksCfg struct {
 	Redis *rdb.RedisConfig `json:"redis"`
@@ -45,9 +45,27 @@ var defaultConfig = SteramerConfig{}
 
 // loadConfig loads the configuration from the specified file, merging into the default configuration.
 func LoadConfig() (cfg SteramerConfig, err error) {
+	var algoNode []*algod.AlgoNodeConfig
+	var algodVar algod.AlgoConfig
+	var algoRedis rdb.RedisConfig
+	var OPA rego.OpaConfig
 	flag.Parse()
 	cfg = defaultConfig
-	err = utils.LoadJSONCFromFile(*cfgFile, &cfg)
+	// algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: os.Getenv("NodeHost"), Id: os.Getenv("NodeType"), Token: ""})
+	algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: constant.NodeHost, Id: constant.NodeType, Token: ""})
+	// algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: "http://172.31.43.67:8080", Id: "private-node", Token: ""})
+	algodVar.ANodes = algoNode
+	cfg.Algod = &algodVar
+	// algoRedis.Addr = os.Getenv("RedisHost") + ":" + os.Getenv("RedisPort")
+	algoRedis.Addr = constant.RedisHost + ":" + constant.RedisPort
+	algoRedis.DB = 0
+	algoRedis.Password = ""
+	algoRedis.Username = ""
+	cfg.Sinks.Redis = &algoRedis
+	OPA.MyID = constant.MyId
+	OPA.Rules.Block = constant.RuleBlock
+	cfg.Rego = &OPA
+	// err = utils.LoadJSONCFromFile(*cfgFile, &cfg)
 
 	if cfg.Algod == nil {
 		return cfg, fmt.Errorf("[CFG] Missing algod config")
