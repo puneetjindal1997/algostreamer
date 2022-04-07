@@ -52,9 +52,10 @@ func LoadConfig() (cfg SteramerConfig, err error) {
 	var OPA rego.OpaConfig
 	flag.Parse()
 	cfg = defaultConfig
-	algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: os.Getenv("NodeHost"), Id: os.Getenv("NodeType"), Token: ""})
+	algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: os.Getenv("NodeHost"), Id: os.Getenv("NodeType"), Token: "", LastBlockKey: os.Getenv("LastBlockPublic")})
+	algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: os.Getenv("PrivateHost"), Id: os.Getenv("NodeType"), Token: os.Getenv("Token"), LastBlockKey: os.Getenv("LastBlockPrivate")})
 	// algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: constant.NodeHost, Id: constant.NodeType, Token: ""})
-	// algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: "http://172.31.43.67:8080", Id: "private-node", Token: ""})
+	// algoNode = append(algoNode, &algod.AlgoNodeConfig{Address: "http://3.15.228.205:28280", Id: "public-node", Token: "EXRPIUPWOFLWMOTLKVWTOTERBYITVSKUOULLFXKNZEOGYCTNQKEIWVGRKFCMMGFJ"})
 	algodVar.ANodes = algoNode
 	cfg.Algod = &algodVar
 	algoRedis.Addr = os.Getenv("RedisHost") + ":" + os.Getenv("RedisPort")

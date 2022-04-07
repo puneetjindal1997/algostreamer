@@ -34,9 +34,10 @@ import (
 )
 
 type AlgoNodeConfig struct {
-	Address string `json:"address"`
-	Token   string `json:"token"`
-	Id      string `json:"id"`
+	Address      string `json:"address"`
+	Token        string `json:"token"`
+	Id           string `json:"id"`
+	LastBlockKey string `json:"last_block_key"`
 }
 
 type AlgoConfig struct {
@@ -138,7 +139,7 @@ func algodStreamNode(ctx context.Context, acfg *AlgoConfig, idx int, bchan chan 
 
 		var nextRound uint64 = 0
 		if start < 0 {
-			blockValue, _ := redis.Get("block_no")
+			blockValue, _ := redis.Get(cfg.LastBlockKey)
 			blockStr := blockValue.(string)
 			nodeStatus.LastRound, _ = strconv.ParseUint(blockStr, 10, 64)
 			nextRound = nodeStatus.LastRound
@@ -151,7 +152,7 @@ func algodStreamNode(ctx context.Context, acfg *AlgoConfig, idx int, bchan chan 
 		ustop := uint64(stop)
 		for stop < 0 || nextRound <= ustop {
 			for ; nextRound <= nodeStatus.LastRound; nextRound++ {
-				redis.Set("block_no", nextRound)
+				redis.Set(cfg.LastBlockKey, nextRound)
 				err := utils.Backoff(ctx, func(actx context.Context) error {
 					gMax := globalMaxBlock
 					//skip old blocks in case other nodes are ahead of us
